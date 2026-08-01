@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block titulo %}Login | Exotika Brazil{% endblock %}
+
+{% block conteudo %}
+<div class="row justify-content-center my-5">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow-lg border-0 rounded-3">
+            <div class="card-header bg-dark text-white text-center py-3">
+                <h4 class="mb-0 fw-bold">
+                    <i class="fa-solid fa-dragon text-warning me-2"></i>Exotika Brazil
+                </h4>
+                <small class="text-muted">Acesse sua conta para continuar</small>
+            </div>
+            <div class="card-body p-4 bg-white">
+                
+                {% if form.errors %}
+                    <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                        <i class="fa-solid fa-circle-exclamation me-1"></i> Usuário ou senha incorretos.
+                    </div>
+                {% endif %}
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    
+                    <button type="submit" class="btn btn-warning w-100 fw-bold mt-3 py-2 text-dark shadow-sm">
+                        <i class="fa-solid fa-right-to-bracket me-2"></i>Entrar no Sistema
+                    </button>
+                </form>
+            </div>
+            <div class="card-footer text-center bg-light py-3 border-0">
+                <small class="text-muted">Esqueceu a senha? Entre em contato com o suporte.</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

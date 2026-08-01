@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Espécies | Exotika Brazil{% endblock %}
+
+{% block conteudo %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fa-solid fa-dna text-warning me-2"></i>Espécies Cadastradas</h2>
+    {% if user.is_authenticated %}
+        <a href="{% url 'cadastrar-especie' %}" class="btn btn-primary">
+            <i class="fa-solid fa-plus me-1"></i> Nova Espécie
+        </a>
+    {% endif %}
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped align-middle mb-0">
+    <thead class="table-dark">
+        <tr>
+            <th style="width: 70px;">Imagem</th>
+            <th>Nome Comum</th>
+            <th>Nome Científico</th>
+            <th>Classe Biológica</th>
+            <th>Requer IBAMA?</th>
+            <th class="text-end">Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for especie in especies %}
+        <tr>
+            <td>
+                {% if especie.foto %}
+                    <img src="{{ especie.foto.url }}" alt="{{ especie.nome_comum }}" class="rounded shadow-sm" style="width: 50px; height: 50px; object-fit: cover;">
+                {% else %}
+                    <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="fa-solid fa-image text-white-50"></i>
+                    </div>
+                {% endif %}
+            </td>
+            <td class="fw-bold">{{ especie.nome_comum }}</td>
+            <td class="fst-italic text-muted">{{ especie.nome_cientifico }}</td>
+            <td><span class="badge bg-secondary">{{ especie.get_classe_biologica_display }}</span></td>
+            <td>
+                {% if especie.requer_autorizacao_ibama %}
+                    <span class="badge bg-warning text-dark"><i class="fa-solid fa-shield-halved me-1"></i>Sim</span>
+                {% else %}
+                    <span class="badge bg-success"><i class="fa-solid fa-circle-check me-1"></i>Isento</span>
+                {% endif %}
+            </td>
+            <td class="text-end">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'editar-especie' especie.pk %}" class="btn btn-sm btn-outline-warning me-1" title="Editar">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </a>
+                    <a href="{% url 'excluir-especie' especie.pk %}" class="btn btn-sm btn-outline-danger" title="Excluir">
+                        <i class="fa-solid fa-trash"></i>
+                    </a>
+                {% else %}
+                    <span class="text-muted small">Faça login para editar</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" class="text-center py-4 text-muted">
+                Nenhuma espécie cadastrada até o momento.
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+        </div>
+    </div>
+</div>
+{% endblock %}

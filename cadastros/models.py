@@ -18,6 +18,8 @@ class Especie(models.Model):
     classe_biologica = models.CharField(max_length=20, choices=CLASS_CHOICES, verbose_name="Classe Biológica")
     requer_autorizacao_ibama = models.BooleanField(default=True, verbose_name="Requer Autorização IBAMA?")
     descricao = models.TextField(blank=True, null=True, verbose_name="Descrição / Cuidados Básicos")
+    # CAMPO DE FOTO CORRETAMENTE POSICIONADO AQUI:
+    foto = models.ImageField(upload_to='especies/', blank=True, null=True, verbose_name="Foto / Ilustração")
 
     def __str__(self):
         return f"{self.nome_comum} ({self.nome_cientifico})"
@@ -139,7 +141,6 @@ class Venda(models.Model):
 # ------------------------------------------------------------------------------
 class ItemVenda(models.Model):
     venda = models.ForeignKey(Venda, on_delete=models.CASCADE, related_name="itens", verbose_name="Venda")
-
     produto = models.ForeignKey(Produto, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Produto")
     animal = models.ForeignKey(Animal, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Animal")
     quantidade = models.PositiveIntegerField(default=1, verbose_name="Quantidade")

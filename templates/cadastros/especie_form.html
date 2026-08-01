@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block titulo %}Formulário de Espécie | Exotika Brazil{% endblock %}
+
+{% block conteudo %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white">
+                <h4 class="mb-0 fs-5">
+                    {% if object %}
+                        <i class="fa-solid fa-pen-to-square me-2 text-warning"></i>Editar Espécie
+                    {% else %}
+                        <i class="fa-solid fa-plus me-2 text-warning"></i>Cadastrar Nova Espécie
+                    {% endif %}
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'listar-especie' %}" class="btn btn-outline-secondary">
+                            <i class="fa-solid fa-arrow-left me-1"></i> Voltar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
