@@ -1,13 +1,21 @@
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, TemplateView
 from django.urls import reverse_lazy
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.forms import inlineformset_factory
 from django.db import transaction
+from django.db.models import Sum
 
 from .models import Especie, Fornecedor, CategoriaProduto, Produto, Animal, Venda, ItemVenda
 from .forms import VendaForm, ItemVendaForm
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
-from django.db.models import Sum
+
+
+# ==============================================================================
+# MIXIN DE PROTEÇÃO POR GRUPO / PERMISSÃO (2º TRIMESTRE)
+# ==============================================================================
+class AdminRequiredMixin(UserPassesTestMixin):
+    """Garante acesso apenas para superusuários ou membros do grupo 'Administradores'"""
+    def test_func(self):
+        return self.request.user.is_superuser or self.request.user.groups.filter(name='Administradores').exists()
 
 
 # ==============================================================================
@@ -31,7 +39,7 @@ class EspecieUpdate(LoginRequiredMixin, UpdateView):
     template_name = 'cadastros/especie_form.html'
     success_url = reverse_lazy('listar-especie')
 
-class EspecieDelete(LoginRequiredMixin, DeleteView):
+class EspecieDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
     model = Especie
     template_name = 'cadastros/especie_confirm_delete.html'
     success_url = reverse_lazy('listar-especie')
@@ -58,7 +66,7 @@ class FornecedorUpdate(LoginRequiredMixin, UpdateView):
     template_name = 'cadastros/fornecedor_form.html'
     success_url = reverse_lazy('listar-fornecedor')
 
-class FornecedorDelete(LoginRequiredMixin, DeleteView):
+class FornecedorDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
     model = Fornecedor
     template_name = 'cadastros/fornecedor_confirm_delete.html'
     success_url = reverse_lazy('listar-fornecedor')
@@ -85,7 +93,7 @@ class CategoriaProdutoUpdate(LoginRequiredMixin, UpdateView):
     template_name = 'cadastros/categoria_form.html'
     success_url = reverse_lazy('listar-categoria')
 
-class CategoriaProdutoDelete(LoginRequiredMixin, DeleteView):
+class CategoriaProdutoDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
     model = CategoriaProduto
     template_name = 'cadastros/categoria_confirm_delete.html'
     success_url = reverse_lazy('listar-categoria')
@@ -99,6 +107,7 @@ class ProdutoList(ListView):
     template_name = 'cadastros/produto_list.html'
     context_object_name = 'produtos'
     paginate_by = 10
+    queryset = Produto.objects.select_related('categoria', 'fornecedor').all()
 
 class ProdutoCreate(LoginRequiredMixin, CreateView):
     model = Produto
@@ -112,7 +121,7 @@ class ProdutoUpdate(LoginRequiredMixin, UpdateView):
     template_name = 'cadastros/produto_form.html'
     success_url = reverse_lazy('listar-produto')
 
-class ProdutoDelete(LoginRequiredMixin, DeleteView):
+class ProdutoDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
     model = Produto
     template_name = 'cadastros/produto_confirm_delete.html'
     success_url = reverse_lazy('listar-produto')
@@ -126,6 +135,7 @@ class AnimalList(ListView):
     template_name = 'cadastros/animal_list.html'
     context_object_name = 'animais'
     paginate_by = 10
+    queryset = Animal.objects.select_related('especie', 'fornecedor').all()
 
 class AnimalCreate(LoginRequiredMixin, CreateView):
     model = Animal
@@ -139,7 +149,7 @@ class AnimalUpdate(LoginRequiredMixin, UpdateView):
     template_name = 'cadastros/animal_form.html'
     success_url = reverse_lazy('listar-animal')
 
-class AnimalDelete(LoginRequiredMixin, DeleteView):
+class AnimalDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
     model = Animal
     template_name = 'cadastros/animal_confirm_delete.html'
     success_url = reverse_lazy('listar-animal')
@@ -152,11 +162,18 @@ ItemVendaFormSet = inlineformset_factory(
     Venda, ItemVenda, form=ItemVendaForm, extra=1, can_delete=True
 )
 
-class VendaList(ListView):
+class VendaList(LoginRequiredMixin, ListView):
     model = Venda
     template_name = 'cadastros/venda_list.html'
     context_object_name = 'vendas'
     paginate_by = 10
+
+    def get_queryset(self):
+        # Admins e Superusuários podem ver todas as vendas; usuários comuns veem APENAS as suas
+        if self.request.user.is_superuser or self.request.user.groups.filter(name='Administradores').exists():
+            return Venda.objects.select_related('cliente').all()
+        return Venda.objects.filter(cliente=self.request.user).select_related('cliente')
+
 
 class VendaCreate(LoginRequiredMixin, CreateView):
     model = Venda
@@ -175,6 +192,10 @@ class VendaCreate(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         context = self.get_context_data()
         itens = context['itens']
+
+        # Atribui o usuário logado como o cliente da venda automaticamente
+        form.instance.cliente = self.request.user
+
         with transaction.atomic():
             self.object = form.save()
             if itens.is_valid():
@@ -185,12 +206,10 @@ class VendaCreate(LoginRequiredMixin, CreateView):
                 for item in itens_salvos:
                     valor_total += item.quantidade * item.preco_unitario
 
-                    # Regra de negócio 1: Baixa no estoque do Produto
                     if item.produto:
                         item.produto.quantidade_estoque -= item.quantidade
                         item.produto.save()
 
-                    # Regra de negócio 2: Atualização do status do Animal
                     if item.animal:
                         item.animal.status = 'VENDIDO'
                         item.animal.save()
@@ -201,8 +220,29 @@ class VendaCreate(LoginRequiredMixin, CreateView):
 
         return super().form_valid(form)
 
+
 # ==============================================================================
-# 7. PAGINA INICIAL / DASHBOARD
+# 7. DETALHES DA VENDA (DetailView)
+# ==============================================================================
+class VendaDetail(LoginRequiredMixin, DetailView):
+    model = Venda
+    template_name = 'cadastros/venda_detail.html'
+    context_object_name = 'venda'
+
+    def get_queryset(self):
+        # Impede que um usuário veja os detalhes de uma venda que não é dele (a não ser que seja admin)
+        if self.request.user.is_superuser or self.request.user.groups.filter(name='Administradores').exists():
+            return Venda.objects.all()
+        return Venda.objects.filter(cliente=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['itens'] = ItemVenda.objects.filter(venda=self.object).select_related('produto', 'animal')
+        return context
+
+
+# ==============================================================================
+# 8. PAGINA INICIAL / DASHBOARD
 # ==============================================================================
 class IndexView(TemplateView):
     template_name = 'index.html'
