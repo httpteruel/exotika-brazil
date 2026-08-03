@@ -1,7 +1,12 @@
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Especie, Fornecedor, CategoriaProduto, Produto, Animal
+from django.forms import inlineformset_factory
+from django.db import transaction
+
+from .models import Especie, Fornecedor, CategoriaProduto, Produto, Animal, Venda, ItemVenda
+from .forms import VendaForm, ItemVendaForm
+
 
 # ==============================================================================
 # 1. ESPÉCIE
@@ -136,3 +141,60 @@ class AnimalDelete(LoginRequiredMixin, DeleteView):
     model = Animal
     template_name = 'cadastros/animal_confirm_delete.html'
     success_url = reverse_lazy('listar-animal')
+
+
+# ==============================================================================
+# 6. VENDA
+# ==============================================================================
+ItemVendaFormSet = inlineformset_factory(
+    Venda, ItemVenda, form=ItemVendaForm, extra=1, can_delete=True
+)
+
+class VendaList(ListView):
+    model = Venda
+    template_name = 'cadastros/venda_list.html'
+    context_object_name = 'vendas'
+    paginate_by = 10
+
+class VendaCreate(LoginRequiredMixin, CreateView):
+    model = Venda
+    form_class = VendaForm
+    template_name = 'cadastros/venda_form.html'
+    success_url = reverse_lazy('listar-venda')
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        if self.request.POST:
+            data['itens'] = ItemVendaFormSet(self.request.POST)
+        else:
+            data['itens'] = ItemVendaFormSet()
+        return data
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        itens = context['itens']
+        with transaction.atomic():
+            self.object = form.save()
+            if itens.is_valid():
+                itens.instance = self.object
+                itens_salvos = itens.save()
+
+                valor_total = 0
+                for item in itens_salvos:
+                    valor_total += item.quantidade * item.preco_unitario
+
+                    # Regra de negócio 1: Baixa no estoque do Produto
+                    if item.produto:
+                        item.produto.quantidade_estoque -= item.quantidade
+                        item.produto.save()
+
+                    # Regra de negócio 2: Atualização do status do Animal
+                    if item.animal:
+                        item.animal.status = 'VENDIDO'
+                        item.animal.save()
+
+                self.object.valor_total = valor_total
+                self.object.status = 'CONCLUIDA'
+                self.object.save()
+
+        return super().form_valid(form)

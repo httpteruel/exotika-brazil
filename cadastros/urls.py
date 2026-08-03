@@ -1,4 +1,5 @@
 from django.urls import path
+from .views import VendaList, VendaCreate
 from .views import (
     EspecieList, EspecieCreate, EspecieUpdate, EspecieDelete,
     FornecedorList, FornecedorCreate, FornecedorUpdate, FornecedorDelete,
@@ -37,4 +38,8 @@ urlpatterns = [
     path('animais/cadastrar/', AnimalCreate.as_view(), name='cadastrar-animal'),
     path('animais/editar/<int:pk>/', AnimalUpdate.as_view(), name='editar-animal'),
     path('animais/excluir/<int:pk>/', AnimalDelete.as_view(), name='excluir-animal'),
+
+    # Vendas
+    path('vendas/', VendaList.as_view(), name='listar-venda'),
+    path('vendas/cadastrar/', VendaCreate.as_view(), name='cadastrar-venda'),
 ]
