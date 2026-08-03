@@ -6,6 +6,8 @@ from django.db import transaction
 
 from .models import Especie, Fornecedor, CategoriaProduto, Produto, Animal, Venda, ItemVenda
 from .forms import VendaForm, ItemVendaForm
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
+from django.db.models import Sum
 
 
 # ==============================================================================
@@ -198,3 +200,21 @@ class VendaCreate(LoginRequiredMixin, CreateView):
                 self.object.save()
 
         return super().form_valid(form)
+
+# ==============================================================================
+# 7. PAGINA INICIAL / DASHBOARD
+# ==============================================================================
+class IndexView(TemplateView):
+    template_name = 'index.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['total_especies'] = Especie.objects.count()
+        context['total_animais'] = Animal.objects.count()
+        context['animais_disponiveis'] = Animal.objects.filter(status='DISPONIVEL').count()
+        context['total_produtos'] = Produto.objects.count()
+        context['total_vendas'] = Venda.objects.filter(status='CONCLUIDA').count()
+        
+        faturamento = Venda.objects.filter(status='CONCLUIDA').aggregate(Sum('valor_total'))['valor_total__sum']
+        context['total_faturamento'] = faturamento or 0.00
+        return context
