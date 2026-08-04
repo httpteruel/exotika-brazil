@@ -5,8 +5,11 @@ from django.forms import inlineformset_factory
 from django.db import transaction
 from django.db.models import Sum
 
+from django_filters.views import FilterView
+
 from .models import Especie, Fornecedor, CategoriaProduto, Produto, Animal, Venda, ItemVenda
 from .forms import VendaForm, ItemVendaForm
+from .filters import AnimalFilter, ProdutoFilter
 
 
 # ==============================================================================
@@ -100,14 +103,17 @@ class CategoriaProdutoDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView)
 
 
 # ==============================================================================
-# 4. PRODUTO
+# 4. PRODUTO (Atualizado com FilterView)
 # ==============================================================================
-class ProdutoList(ListView):
+class ProdutoList(FilterView):
     model = Produto
     template_name = 'cadastros/produto_list.html'
     context_object_name = 'produtos'
     paginate_by = 10
-    queryset = Produto.objects.select_related('categoria', 'fornecedor').all()
+    filterset_class = ProdutoFilter
+
+    def get_queryset(self):
+        return Produto.objects.select_related('categoria', 'fornecedor').all()
 
 class ProdutoCreate(LoginRequiredMixin, CreateView):
     model = Produto
@@ -128,14 +134,17 @@ class ProdutoDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
 
 
 # ==============================================================================
-# 5. ANIMAL
+# 5. ANIMAL (Atualizado com FilterView)
 # ==============================================================================
-class AnimalList(ListView):
+class AnimalList(FilterView):
     model = Animal
     template_name = 'cadastros/animal_list.html'
     context_object_name = 'animais'
     paginate_by = 10
-    queryset = Animal.objects.select_related('especie', 'fornecedor').all()
+    filterset_class = AnimalFilter
+
+    def get_queryset(self):
+        return Animal.objects.select_related('especie', 'fornecedor').all()
 
 class AnimalCreate(LoginRequiredMixin, CreateView):
     model = Animal
@@ -169,7 +178,6 @@ class VendaList(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        # Admins e Superusuários podem ver todas as vendas; usuários comuns veem APENAS as suas
         if self.request.user.is_superuser or self.request.user.groups.filter(name='Administradores').exists():
             return Venda.objects.select_related('cliente').all()
         return Venda.objects.filter(cliente=self.request.user).select_related('cliente')
@@ -193,7 +201,6 @@ class VendaCreate(LoginRequiredMixin, CreateView):
         context = self.get_context_data()
         itens = context['itens']
 
-        # Atribui o usuário logado como o cliente da venda automaticamente
         form.instance.cliente = self.request.user
 
         with transaction.atomic():
@@ -222,7 +229,7 @@ class VendaCreate(LoginRequiredMixin, CreateView):
 
 
 # ==============================================================================
-# 7. DETALHES DA VENDA (DetailView)
+# 7. DETALHES DA VENDA
 # ==============================================================================
 class VendaDetail(LoginRequiredMixin, DetailView):
     model = Venda
@@ -230,7 +237,6 @@ class VendaDetail(LoginRequiredMixin, DetailView):
     context_object_name = 'venda'
 
     def get_queryset(self):
-        # Impede que um usuário veja os detalhes de uma venda que não é dele (a não ser que seja admin)
         if self.request.user.is_superuser or self.request.user.groups.filter(name='Administradores').exists():
             return Venda.objects.all()
         return Venda.objects.filter(cliente=self.request.user)
@@ -258,3 +264,4 @@ class IndexView(TemplateView):
         faturamento = Venda.objects.filter(status='CONCLUIDA').aggregate(Sum('valor_total'))['valor_total__sum']
         context['total_faturamento'] = faturamento or 0.00
         return context
+    

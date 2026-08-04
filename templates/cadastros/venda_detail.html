@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Detalhes da Venda #{{ venda.id }} | Exotika Brazil{% endblock %}
+
+{% block conteudo %}
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0 fw-bold"><i class="fa-solid fa-file-invoice me-2 text-warning"></i>Venda #{{ venda.id }}</h5>
+        <span class="badge bg-success fs-6">{{ venda.status }}</span>
+    </div>
+    <div class="card-body p-4">
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <span class="text-muted small text-uppercase fw-semibold d-block">Data da Venda</span>
+                <strong>{{ venda.data_venda|date:"d/m/Y H:i" }}</strong>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted small text-uppercase fw-semibold d-block">Cliente / Usuário</span>
+                <strong>{{ venda.cliente.get_full_name|default:venda.cliente.username|default:"Não informado" }}</strong>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted small text-uppercase fw-semibold d-block">Valor Total</span>
+                <span class="fs-4 fw-bold text-success">R$ {{ venda.valor_total|floatformat:2 }}</span>
+            </div>
+        </div>
+
+        <h6 class="fw-bold border-bottom pb-2 mb-3">Itens Incluídos na Venda</h6>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Item (Produto / Animal)</th>
+                        <th class="text-center">Quantidade</th>
+                        <th>Preço Unitário</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in itens %}
+                    <tr>
+                        <td>
+                            {% if item.produto %}
+                                <span class="badge bg-primary">Produto</span>
+                            {% elif item.animal %}
+                                <span class="badge bg-warning text-dark">Animal</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.produto %}
+                                {{ item.produto.nome }}
+                            {% elif item.animal %}
+                                {{ item.animal.especie.nome_comum }} (Microchip/Anilha: {{ item.animal.microchip_anilha }})
+                            {% endif %}
+                        </td>
+                        <td class="text-center">{{ item.quantidade }}</td>
+                        <td>R$ {{ item.preco_unitario|floatformat:2 }}</td>
+                        <td class="fw-bold text-dark">R$ {% widthratio item.quantidade 1 item.preco_unitario %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">Nenhum item encontrado nesta venda.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-light text-end py-3">
+        <a href="{% url 'listar-venda' %}" class="btn btn-secondary btn-sm px-4">
+            <i class="fa-solid fa-arrow-left me-1"></i> Voltar para Listagem
+        </a>
+    </div>
+</div>
+{% endblock %}

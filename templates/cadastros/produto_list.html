@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
+
 {% block titulo %}Produtos | Exotika Brazil{% endblock %}
+
 {% block conteudo %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="fa-solid fa-box text-warning me-2"></i>Produtos e Insumos</h2>
@@ -7,6 +9,42 @@
         <a href="{% url 'cadastrar-produto' %}" class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i> Novo Produto</a>
     {% endif %}
 </div>
+
+<!-- Painel de Filtros (Django Filter) -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-light fw-bold">
+        <i class="fa-solid fa-filter me-1"></i> Filtrar Produtos
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label fw-bold">{{ filter.form.nome.label }}</label>
+                {{ filter.form.nome }}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">{{ filter.form.categoria.label }}</label>
+                {{ filter.form.categoria }}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">{{ filter.form.preco_min.label }}</label>
+                {{ filter.form.preco_min }}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">{{ filter.form.preco_max.label }}</label>
+                {{ filter.form.preco_max }}
+            </div>
+            <div class="col-12 d-flex justify-content-end gap-2">
+                <a href="{% url 'listar-produto' %}" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-rotate-left me-1"></i> Limpar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-magnifying-glass me-1"></i> Buscar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="card shadow-sm border-0">
     <div class="card-body p-0">
         <table class="table table-hover table-striped align-middle mb-0">
@@ -42,10 +80,39 @@
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="6" class="text-center py-4 text-muted">Nenhum produto cadastrado.</td></tr>
+                <tr><td colspan="6" class="text-center py-4 text-muted">Nenhum produto encontrado.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+
+<!-- Paginação -->
+{% if is_paginated %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo; Primeira</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Anterior</a>
+            </li>
+        {% endif %}
+
+        <li class="page-item disabled">
+            <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        </li>
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Próxima</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Última &raquo;</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
 {% endblock %}

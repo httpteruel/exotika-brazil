@@ -2,19 +2,13 @@ import os
 from pathlib import Path
 from urllib.parse import urlparse, parse_qsl
 
-# Caminho base do projeto
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Chave secreta de segurança (em produção, use variável de ambiente)
 SECRET_KEY = 'django-insecure-sua-chave-secreta-aqui-troque-em-producao'
 
-# DEBUG ativado para desenvolvimento
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-
-
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -36,6 +30,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',  # Posicionado no topo
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -43,7 +38,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'exotika.urls'
@@ -85,9 +79,6 @@ DATABASES = {
     }
 }
 
-
-# Password validation
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -103,9 +94,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-# Internationalization (PT-BR e Fuso Horário de Brasília)
-
 LANGUAGE_CODE = 'pt-br'
 
 TIME_ZONE = 'America/Sao_Paulo'
@@ -114,21 +102,14 @@ USE_I18N = True
 
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Media files (Fotos de Animais, Documentos de Origem, etc.)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-
-
-# Crispy Forms Config (Bootstrap 5)
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
@@ -140,13 +121,8 @@ LOGIN_REDIRECT_URL = 'index'
 LOGIN_URL = 'login'
 LOGOUT_REDIRECT_URL = 'login'
 
-
-# Default primary key field type
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
-# Configuração para o Django Debug Toolbar (exibir em localhost)
 INTERNAL_IPS = [
     '127.0.0.1',
 ]
