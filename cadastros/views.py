@@ -11,18 +11,17 @@ from .models import Especie, Fornecedor, CategoriaProduto, Produto, Animal, Vend
 from .forms import VendaForm, ItemVendaForm
 from .filters import AnimalFilter, ProdutoFilter
 
-
-# ==============================================================================
-# MIXIN DE PROTEÇÃO POR GRUPO / PERMISSÃO (2º TRIMESTRE)
-# ==============================================================================
 class AdminRequiredMixin(UserPassesTestMixin):
     """Garante acesso apenas para superusuários ou membros do grupo 'Administradores'"""
     def test_func(self):
-        return self.request.user.is_superuser or self.request.user.groups.filter(name='Administradores').exists()
+        return self.request.user.is_authenticated and (
+            self.request.user.is_superuser or 
+            self.request.user.groups.filter(name='Administradores').exists()
+        )
 
 
 # ==============================================================================
-# 1. ESPÉCIE
+# ESPECIE
 # ==============================================================================
 class EspecieList(ListView):
     model = Especie
@@ -30,13 +29,13 @@ class EspecieList(ListView):
     context_object_name = 'especies'
     paginate_by = 10
 
-class EspecieCreate(LoginRequiredMixin, CreateView):
+class EspecieCreate(LoginRequiredMixin, AdminRequiredMixin, CreateView):
     model = Especie
     fields = ['nome_comum', 'nome_cientifico', 'classe_biologica', 'requer_autorizacao_ibama', 'descricao', 'foto']
     template_name = 'cadastros/especie_form.html'
     success_url = reverse_lazy('listar-especie')
 
-class EspecieUpdate(LoginRequiredMixin, UpdateView):
+class EspecieUpdate(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
     model = Especie
     fields = ['nome_comum', 'nome_cientifico', 'classe_biologica', 'requer_autorizacao_ibama', 'descricao', 'foto']
     template_name = 'cadastros/especie_form.html'
@@ -49,7 +48,7 @@ class EspecieDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
 
 
 # ==============================================================================
-# 2. FORNECEDOR
+# FORNECEDOR
 # ==============================================================================
 class FornecedorList(ListView):
     model = Fornecedor
@@ -57,13 +56,13 @@ class FornecedorList(ListView):
     context_object_name = 'fornecedores'
     paginate_by = 10
 
-class FornecedorCreate(LoginRequiredMixin, CreateView):
+class FornecedorCreate(LoginRequiredMixin, AdminRequiredMixin, CreateView):
     model = Fornecedor
     fields = ['razao_social', 'cnpj_cpf', 'licenca_ibama', 'telefone', 'email']
     template_name = 'cadastros/fornecedor_form.html'
     success_url = reverse_lazy('listar-fornecedor')
 
-class FornecedorUpdate(LoginRequiredMixin, UpdateView):
+class FornecedorUpdate(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
     model = Fornecedor
     fields = ['razao_social', 'cnpj_cpf', 'licenca_ibama', 'telefone', 'email']
     template_name = 'cadastros/fornecedor_form.html'
@@ -76,7 +75,7 @@ class FornecedorDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
 
 
 # ==============================================================================
-# 3. CATEGORIA DE PRODUTO
+# CATEGORIA PRODUTO
 # ==============================================================================
 class CategoriaProdutoList(ListView):
     model = CategoriaProduto
@@ -84,13 +83,13 @@ class CategoriaProdutoList(ListView):
     context_object_name = 'categorias'
     paginate_by = 10
 
-class CategoriaProdutoCreate(LoginRequiredMixin, CreateView):
+class CategoriaProdutoCreate(LoginRequiredMixin, AdminRequiredMixin, CreateView):
     model = CategoriaProduto
     fields = ['nome', 'descricao']
     template_name = 'cadastros/categoria_form.html'
     success_url = reverse_lazy('listar-categoria')
 
-class CategoriaProdutoUpdate(LoginRequiredMixin, UpdateView):
+class CategoriaProdutoUpdate(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
     model = CategoriaProduto
     fields = ['nome', 'descricao']
     template_name = 'cadastros/categoria_form.html'
@@ -103,7 +102,7 @@ class CategoriaProdutoDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView)
 
 
 # ==============================================================================
-# 4. PRODUTO (Atualizado com FilterView)
+# PRODUTO
 # ==============================================================================
 class ProdutoList(FilterView):
     model = Produto
@@ -115,13 +114,13 @@ class ProdutoList(FilterView):
     def get_queryset(self):
         return Produto.objects.select_related('categoria', 'fornecedor').all()
 
-class ProdutoCreate(LoginRequiredMixin, CreateView):
+class ProdutoCreate(LoginRequiredMixin, AdminRequiredMixin, CreateView):
     model = Produto
     fields = ['categoria', 'fornecedor', 'nome', 'descricao', 'preco', 'quantidade_estoque', 'imagem']
     template_name = 'cadastros/produto_form.html'
     success_url = reverse_lazy('listar-produto')
 
-class ProdutoUpdate(LoginRequiredMixin, UpdateView):
+class ProdutoUpdate(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
     model = Produto
     fields = ['categoria', 'fornecedor', 'nome', 'descricao', 'preco', 'quantidade_estoque', 'imagem']
     template_name = 'cadastros/produto_form.html'
@@ -134,7 +133,7 @@ class ProdutoDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
 
 
 # ==============================================================================
-# 5. ANIMAL (Atualizado com FilterView)
+# ANIMAL
 # ==============================================================================
 class AnimalList(FilterView):
     model = Animal
@@ -146,13 +145,13 @@ class AnimalList(FilterView):
     def get_queryset(self):
         return Animal.objects.select_related('especie', 'fornecedor').all()
 
-class AnimalCreate(LoginRequiredMixin, CreateView):
+class AnimalCreate(LoginRequiredMixin, AdminRequiredMixin, CreateView):
     model = Animal
     fields = ['especie', 'fornecedor', 'microchip_anilha', 'data_nascimento', 'sexo', 'preco', 'status', 'foto']
     template_name = 'cadastros/animal_form.html'
     success_url = reverse_lazy('listar-animal')
 
-class AnimalUpdate(LoginRequiredMixin, UpdateView):
+class AnimalUpdate(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
     model = Animal
     fields = ['especie', 'fornecedor', 'microchip_anilha', 'data_nascimento', 'sexo', 'preco', 'status', 'foto']
     template_name = 'cadastros/animal_form.html'
@@ -165,7 +164,7 @@ class AnimalDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
 
 
 # ==============================================================================
-# 6. VENDA
+# VENDA
 # ==============================================================================
 ItemVendaFormSet = inlineformset_factory(
     Venda, ItemVenda, form=ItemVendaForm, extra=1, can_delete=True
@@ -178,9 +177,11 @@ class VendaList(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
+        # Traz o cliente (select_related) e os itens com seus produtos/animais (prefetch_related)
+        qs = Venda.objects.select_related('cliente').prefetch_related('itens__produto', 'itens__animal')
         if self.request.user.is_superuser or self.request.user.groups.filter(name='Administradores').exists():
-            return Venda.objects.select_related('cliente').all()
-        return Venda.objects.filter(cliente=self.request.user).select_related('cliente')
+            return qs.all()
+        return qs.filter(cliente=self.request.user)
 
 
 class VendaCreate(LoginRequiredMixin, CreateView):
@@ -200,7 +201,6 @@ class VendaCreate(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         context = self.get_context_data()
         itens = context['itens']
-
         form.instance.cliente = self.request.user
 
         with transaction.atomic():
@@ -229,7 +229,7 @@ class VendaCreate(LoginRequiredMixin, CreateView):
 
 
 # ==============================================================================
-# 7. DETALHES DA VENDA
+# DETALHES VENDA
 # ==============================================================================
 class VendaDetail(LoginRequiredMixin, DetailView):
     model = Venda
@@ -237,18 +237,14 @@ class VendaDetail(LoginRequiredMixin, DetailView):
     context_object_name = 'venda'
 
     def get_queryset(self):
+        qs = Venda.objects.select_related('cliente').prefetch_related('itens__produto', 'itens__animal')
         if self.request.user.is_superuser or self.request.user.groups.filter(name='Administradores').exists():
-            return Venda.objects.all()
-        return Venda.objects.filter(cliente=self.request.user)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['itens'] = ItemVenda.objects.filter(venda=self.object).select_related('produto', 'animal')
-        return context
+            return qs.all()
+        return qs.filter(cliente=self.request.user)
 
 
 # ==============================================================================
-# 8. PAGINA INICIAL / DASHBOARD
+# DASHBOARD 
 # ==============================================================================
 class IndexView(TemplateView):
     template_name = 'index.html'
@@ -264,4 +260,3 @@ class IndexView(TemplateView):
         faturamento = Venda.objects.filter(status='CONCLUIDA').aggregate(Sum('valor_total'))['valor_total__sum']
         context['total_faturamento'] = faturamento or 0.00
         return context
-    
