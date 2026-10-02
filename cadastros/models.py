@@ -18,7 +18,6 @@ class Especie(models.Model):
     classe_biologica = models.CharField(max_length=20, choices=CLASS_CHOICES, verbose_name="Classe Biológica")
     requer_autorizacao_ibama = models.BooleanField(default=True, verbose_name="Requer Autorização IBAMA?")
     descricao = models.TextField(blank=True, null=True, verbose_name="Descrição / Cuidados Básicos")
-    # CAMPO DE FOTO CORRETAMENTE POSICIONADO AQUI:
     foto = models.ImageField(upload_to='especies/', blank=True, null=True, verbose_name="Foto / Ilustração")
 
     def __str__(self):
