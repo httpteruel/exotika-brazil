@@ -2,6 +2,8 @@ from decimal import Decimal
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 from .models import Produto, Animal, CategoriaProduto, Especie, Fornecedor
+from django.contrib.auth.models import User
+from django.urls import reverse
 
 
 class ProdutoCaixaBrancaTest(TestCase):
@@ -141,3 +143,40 @@ class AnimalCaixaBrancaTest(TestCase):
             animal.full_clean()
         except ValidationError as e:
             self.fail(f"full_clean() lançou ValidationError para preço 0.01: {e}")
+
+class LoginTestCase(TestCase):
+    def setUp(self):
+        self.username = "usuario_teste"
+        self.password = "senha12345"
+        self.user = User.objects.create_user(
+            username=self.username,
+            password=self.password
+        )
+        self.login_url = reverse('login')  
+
+    def test_login_com_credenciais_validas(self):
+        """Testa se a autenticação é bem-sucedida com usuário e senha corretos"""
+        response = self.client.post(self.login_url, {
+            'username': self.username,
+            'password': self.password
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue('_auth_user_id' in self.client.session)
+
+    def test_login_com_senha_incorreta(self):
+        """Testa se a autenticação falha ao passar uma senha errada"""
+        response = self.client.post(self.login_url, {
+            'username': self.username,
+            'password': 'senha_errada'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse('_auth_user_id' in self.client.session)
+
+    def test_login_com_usuario_inexistente(self):
+        """Testa se a autenticação falha para usuário não cadastrado"""
+        response = self.client.post(self.login_url, {
+            'username': 'usuario_fantasma',
+            'password': self.password
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse('_auth_user_id' in self.client.session)
