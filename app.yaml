@@ -1,0 +1,15 @@
+runtime: python310
+entrypoint: gunicorn -b :$PORT exotika.wsgi:application
+
+instance_class: F1
+
+env_variables:
+  DEBUG: 'False'
+  ALLOWED_HOSTS: '*'
+
+handlers:
+- url: /static
+  static_dir: staticfiles/
+
+- url: /.*
+  script: auto

@@ -118,12 +118,65 @@
 
     <footer class="bg-dark text-light py-3 mt-auto text-center border-top border-secondary">
         <div class="container">
-            <small>&copy; 2026 <strong>Exotika Brazil</strong> - Sistema de Gestão de Animais Exóticos e
-                Insumos.</small>
+            <small>© 2026 <strong>Exotika Brazil</strong> - Sistema de Gestão de Animais Exóticos e Insumos.</small>
         </div>
     </footer>
 
+    <!-- jQuery Core -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Bootstrap 5 Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- PLUGIN JQUERY 1: jQuery Mask Plugin (Requisito 5) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+
+    <!-- PLUGIN JQUERY 2: Bootbox.js - Modais de Confirmação (Requisito 5) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/6.0.0/bootbox.min.js"></script>
+
+    <!-- Script de Inicialização dos Plugins jQuery -->
+    <script>
+        $(document).ready(function () {
+            // 1. Aplicação de Máscaras nos Formulários (jQuery Mask Plugin)
+            $('.mask-telefone').mask('(00) 00000-0000');
+            $('.mask-cpf-cnpj').mask('000.000.000-00', {
+                onKeyPress: function(val, e, field, options) {
+                    var masks = ['000.000.000-000', '00.000.000/0000-00'];
+                    var mask = (val.length > 14) ? masks[1] : masks[0];
+                    $('.mask-cpf-cnpj').mask(mask, options);
+                }
+            });
+            $('.mask-moeda').mask('#.##0,00', {reverse: true});
+
+            // 2. Confirmação Elegante de Exclusão (Bootbox.js)
+            // Basta adicionar a classe "btn-bootbox-delete" nos botões <a> de exclusão
+            $('.btn-bootbox-delete').on('click', function (e) {
+                e.preventDefault();
+                var targetUrl = $(this).attr('href');
+                
+                bootbox.confirm({
+                    title: "<i class='fa-solid fa-triangle-exclamation text-danger me-2'></i>Confirmar Ação",
+                    message: "Tem certeza de que deseja prosseguir para a tela de exclusão deste registro?",
+                    buttons: {
+                        cancel: {
+                            label: '<i class="fa-solid fa-xmark me-1"></i> Cancelar',
+                            className: 'btn-secondary'
+                        },
+                        confirm: {
+                            label: '<i class="fa-solid fa-trash me-1"></i> Confirmar',
+                            className: 'btn-danger'
+                        }
+                    },
+                    callback: function (result) {
+                        if (result) {
+                            window.location.href = targetUrl;
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 

@@ -83,6 +83,16 @@ class Animal(models.Model):
     preco = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)], verbose_name="Preço (R$)")
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='DISPONIVEL', verbose_name="Status")
     foto = models.ImageField(upload_to='animais/', blank=True, null=True, verbose_name="Foto do Animal")
+    
+    # Campo adicionado para o Requisito 3 (Associação ao Usuário):
+    usuario_cadastro = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name="animais_cadastrados",
+        verbose_name="Cadastrado por"
+    )
 
     def __str__(self):
         return f"{self.especie.nome_comum} - ID: {self.microchip_anilha}"

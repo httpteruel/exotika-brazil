@@ -1,6 +1,8 @@
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, TemplateView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib import messages
 from django.forms import inlineformset_factory
 from django.db import transaction
 from django.db.models import Sum
@@ -11,6 +13,9 @@ from .models import Especie, Fornecedor, CategoriaProduto, Produto, Animal, Vend
 from .forms import VendaForm, ItemVendaForm
 from .filters import AnimalFilter, ProdutoFilter
 
+# ==============================================================================
+# CONTROLE DE ACESSO E PERMISSÕES (Requisito 3)
+# ==============================================================================
 class AdminRequiredMixin(UserPassesTestMixin):
     """Garante acesso apenas para superusuários ou membros do grupo 'Administradores'"""
     def test_func(self):
@@ -19,9 +24,19 @@ class AdminRequiredMixin(UserPassesTestMixin):
             self.request.user.groups.filter(name='Administradores').exists()
         )
 
+class DonoOuAdminRequiredMixin(UserPassesTestMixin):
+    """Permite acesso se o usuário for Admin/Superuser OU se for o próprio criador do registro (Requisito 3)"""
+    def test_func(self):
+        if not self.request.user.is_authenticated:
+            return False
+        if self.request.user.is_superuser or self.request.user.groups.filter(name='Administradores').exists():
+            return True
+        obj = self.get_object()
+        return hasattr(obj, 'usuario_cadastro') and obj.usuario_cadastro == self.request.user
+
 
 # ==============================================================================
-# ESPECIE
+# ESPECIE (Requisito 4 - Framework de Mensagens)
 # ==============================================================================
 class EspecieList(ListView):
     model = Especie
@@ -29,26 +44,33 @@ class EspecieList(ListView):
     context_object_name = 'especies'
     paginate_by = 10
 
-class EspecieCreate(LoginRequiredMixin, AdminRequiredMixin, CreateView):
+class EspecieCreate(LoginRequiredMixin, AdminRequiredMixin, SuccessMessageMixin, CreateView):
     model = Especie
     fields = ['nome_comum', 'nome_cientifico', 'classe_biologica', 'requer_autorizacao_ibama', 'descricao', 'foto']
     template_name = 'cadastros/especie_form.html'
     success_url = reverse_lazy('listar-especie')
+    success_message = "Espécie '%(nome_comum)s' cadastrada com sucesso!"
 
-class EspecieUpdate(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
+class EspecieUpdate(LoginRequiredMixin, AdminRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Especie
     fields = ['nome_comum', 'nome_cientifico', 'classe_biologica', 'requer_autorizacao_ibama', 'descricao', 'foto']
     template_name = 'cadastros/especie_form.html'
     success_url = reverse_lazy('listar-especie')
+    success_message = "Espécie '%(nome_comum)s' atualizada com sucesso!"
 
 class EspecieDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
     model = Especie
     template_name = 'cadastros/especie_confirm_delete.html'
     success_url = reverse_lazy('listar-especie')
 
+    def delete(self, request, *args, **kwargs):
+        obj = self.get_object()
+        messages.success(self.request, f"Espécie '{obj.nome_comum}' excluída com sucesso!")
+        return super().delete(request, *args, **kwargs)
+
 
 # ==============================================================================
-# FORNECEDOR
+# FORNECEDOR (Requisito 4 - Framework de Mensagens)
 # ==============================================================================
 class FornecedorList(ListView):
     model = Fornecedor
@@ -56,26 +78,33 @@ class FornecedorList(ListView):
     context_object_name = 'fornecedores'
     paginate_by = 10
 
-class FornecedorCreate(LoginRequiredMixin, AdminRequiredMixin, CreateView):
+class FornecedorCreate(LoginRequiredMixin, AdminRequiredMixin, SuccessMessageMixin, CreateView):
     model = Fornecedor
     fields = ['razao_social', 'cnpj_cpf', 'licenca_ibama', 'telefone', 'email']
     template_name = 'cadastros/fornecedor_form.html'
     success_url = reverse_lazy('listar-fornecedor')
+    success_message = "Fornecedor '%(razao_social)s' cadastrado com sucesso!"
 
-class FornecedorUpdate(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
+class FornecedorUpdate(LoginRequiredMixin, AdminRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Fornecedor
     fields = ['razao_social', 'cnpj_cpf', 'licenca_ibama', 'telefone', 'email']
     template_name = 'cadastros/fornecedor_form.html'
     success_url = reverse_lazy('listar-fornecedor')
+    success_message = "Fornecedor '%(razao_social)s' atualizado com sucesso!"
 
 class FornecedorDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
     model = Fornecedor
     template_name = 'cadastros/fornecedor_confirm_delete.html'
     success_url = reverse_lazy('listar-fornecedor')
 
+    def delete(self, request, *args, **kwargs):
+        obj = self.get_object()
+        messages.success(self.request, f"Fornecedor '{obj.razao_social}' excluído com sucesso!")
+        return super().delete(request, *args, **kwargs)
+
 
 # ==============================================================================
-# CATEGORIA PRODUTO
+# CATEGORIA PRODUTO (Requisito 4 - Framework de Mensagens)
 # ==============================================================================
 class CategoriaProdutoList(ListView):
     model = CategoriaProduto
@@ -83,26 +112,33 @@ class CategoriaProdutoList(ListView):
     context_object_name = 'categorias'
     paginate_by = 10
 
-class CategoriaProdutoCreate(LoginRequiredMixin, AdminRequiredMixin, CreateView):
+class CategoriaProdutoCreate(LoginRequiredMixin, AdminRequiredMixin, SuccessMessageMixin, CreateView):
     model = CategoriaProduto
     fields = ['nome', 'descricao']
     template_name = 'cadastros/categoria_form.html'
     success_url = reverse_lazy('listar-categoria')
+    success_message = "Categoria '%(nome)s' cadastrada com sucesso!"
 
-class CategoriaProdutoUpdate(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
+class CategoriaProdutoUpdate(LoginRequiredMixin, AdminRequiredMixin, SuccessMessageMixin, UpdateView):
     model = CategoriaProduto
     fields = ['nome', 'descricao']
     template_name = 'cadastros/categoria_form.html'
     success_url = reverse_lazy('listar-categoria')
+    success_message = "Categoria '%(nome)s' atualizada com sucesso!"
 
 class CategoriaProdutoDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
     model = CategoriaProduto
     template_name = 'cadastros/categoria_confirm_delete.html'
     success_url = reverse_lazy('listar-categoria')
 
+    def delete(self, request, *args, **kwargs):
+        obj = self.get_object()
+        messages.success(self.request, f"Categoria '{obj.nome}' excluída com sucesso!")
+        return super().delete(request, *args, **kwargs)
+
 
 # ==============================================================================
-# PRODUTO
+# PRODUTO (Requisito 4 - Framework de Mensagens)
 # ==============================================================================
 class ProdutoList(FilterView):
     model = Produto
@@ -114,26 +150,33 @@ class ProdutoList(FilterView):
     def get_queryset(self):
         return Produto.objects.select_related('categoria', 'fornecedor').all()
 
-class ProdutoCreate(LoginRequiredMixin, AdminRequiredMixin, CreateView):
+class ProdutoCreate(LoginRequiredMixin, AdminRequiredMixin, SuccessMessageMixin, CreateView):
     model = Produto
     fields = ['categoria', 'fornecedor', 'nome', 'descricao', 'preco', 'quantidade_estoque', 'imagem']
     template_name = 'cadastros/produto_form.html'
     success_url = reverse_lazy('listar-produto')
+    success_message = "Produto '%(nome)s' cadastrado com sucesso!"
 
-class ProdutoUpdate(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
+class ProdutoUpdate(LoginRequiredMixin, AdminRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Produto
     fields = ['categoria', 'fornecedor', 'nome', 'descricao', 'preco', 'quantidade_estoque', 'imagem']
     template_name = 'cadastros/produto_form.html'
     success_url = reverse_lazy('listar-produto')
+    success_message = "Produto '%(nome)s' atualizado com sucesso!"
 
 class ProdutoDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
     model = Produto
     template_name = 'cadastros/produto_confirm_delete.html'
     success_url = reverse_lazy('listar-produto')
 
+    def delete(self, request, *args, **kwargs):
+        obj = self.get_object()
+        messages.success(self.request, f"Produto '{obj.nome}' excluído com sucesso!")
+        return super().delete(request, *args, **kwargs)
+
 
 # ==============================================================================
-# ANIMAL
+# ANIMAL (Requisito 4 - Framework de Mensagens)
 # ==============================================================================
 class AnimalList(FilterView):
     model = Animal
@@ -143,28 +186,43 @@ class AnimalList(FilterView):
     filterset_class = AnimalFilter
 
     def get_queryset(self):
-        return Animal.objects.select_related('especie', 'fornecedor').all()
+        qs = Animal.objects.select_related('especie', 'fornecedor', 'usuario_cadastro').all()
+        if self.request.user.is_authenticated:
+            if not (self.request.user.is_superuser or self.request.user.groups.filter(name='Administradores').exists()):
+                qs = qs.filter(usuario_cadastro=self.request.user)
+        return qs
 
-class AnimalCreate(LoginRequiredMixin, AdminRequiredMixin, CreateView):
+class AnimalCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Animal
     fields = ['especie', 'fornecedor', 'microchip_anilha', 'data_nascimento', 'sexo', 'preco', 'status', 'foto']
     template_name = 'cadastros/animal_form.html'
     success_url = reverse_lazy('listar-animal')
+    success_message = "Animal registrado com sucesso!"
 
-class AnimalUpdate(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
+    def form_valid(self, form):
+        form.instance.usuario_cadastro = self.request.user
+        return super().form_valid(form)
+
+class AnimalUpdate(LoginRequiredMixin, DonoOuAdminRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Animal
     fields = ['especie', 'fornecedor', 'microchip_anilha', 'data_nascimento', 'sexo', 'preco', 'status', 'foto']
     template_name = 'cadastros/animal_form.html'
     success_url = reverse_lazy('listar-animal')
+    success_message = "Dados do animal atualizados com sucesso!"
 
-class AnimalDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
+class AnimalDelete(LoginRequiredMixin, DonoOuAdminRequiredMixin, DeleteView):
     model = Animal
     template_name = 'cadastros/animal_confirm_delete.html'
     success_url = reverse_lazy('listar-animal')
 
+    def delete(self, request, *args, **kwargs):
+        obj = self.get_object()
+        messages.success(self.request, f"Registro do animal '{obj.microchip_anilha}' excluído com sucesso!")
+        return super().delete(request, *args, **kwargs)
+
 
 # ==============================================================================
-# VENDA
+# VENDA (Requisito 4 - Framework de Mensagens)
 # ==============================================================================
 ItemVendaFormSet = inlineformset_factory(
     Venda, ItemVenda, form=ItemVendaForm, extra=1, can_delete=True
@@ -177,7 +235,6 @@ class VendaList(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        # Traz o cliente (select_related) e os itens com seus produtos/animais (prefetch_related)
         qs = Venda.objects.select_related('cliente').prefetch_related('itens__produto', 'itens__animal')
         if self.request.user.is_superuser or self.request.user.groups.filter(name='Administradores').exists():
             return qs.all()
@@ -224,6 +281,7 @@ class VendaCreate(LoginRequiredMixin, CreateView):
                 self.object.valor_total = valor_total
                 self.object.status = 'CONCLUIDA'
                 self.object.save()
+                messages.success(self.request, f"Venda nº #{self.object.id} concluída com sucesso!")
 
         return super().form_valid(form)
 

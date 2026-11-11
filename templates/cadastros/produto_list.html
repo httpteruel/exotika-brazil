@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load pagination_tags %}
 
 {% block titulo %}Produtos | Exotika Brazil{% endblock %}
 
@@ -87,16 +88,16 @@
     </div>
 </div>
 
-<!-- Paginação -->
+<!-- Paginação utilizando a Template Tag customizada (Requisito 2) -->
 {% if is_paginated %}
 <nav class="mt-4">
     <ul class="pagination justify-content-center">
         {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo; Primeira</a>
+                <a class="page-link" href="?{% param_replace page=1 %}">« Primeira</a>
             </li>
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Anterior</a>
+                <a class="page-link" href="?{% param_replace page=page_obj.previous_page_number %}">Anterior</a>
             </li>
         {% endif %}
 
@@ -106,10 +107,10 @@
 
         {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Próxima</a>
+                <a class="page-link" href="?{% param_replace page=page_obj.next_page_number %}">Próxima</a>
             </li>
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Última &raquo;</a>
+                <a class="page-link" href="?{% param_replace page=page_obj.paginator.num_pages %}">Última »</a>
             </li>
         {% endif %}
     </ul>
