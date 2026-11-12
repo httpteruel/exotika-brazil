@@ -10,6 +10,7 @@ urlpatterns = [
     path('', IndexView.as_view(), name='index'),
     path('cadastros/', include('cadastros.urls')),
     path('usuarios/', include('django.contrib.auth.urls')),
+    path('ia/', include('ia.urls')),
 ]
 
 if settings.DEBUG:

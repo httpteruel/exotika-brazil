@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     # Apps do Projeto Exotika Brazil
     'cadastros.apps.CadastrosConfig',
     'usuarios.apps.UsuariosConfig',
+    'ia',
 
     # Pacotes de terceiros (Requisitos da disciplina)
     'crispy_forms',

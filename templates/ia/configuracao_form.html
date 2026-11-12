@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block titulo %}Configuração de IA - Exotika Brazil{% endblock %}
+
+{% block conteudo %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fa-solid fa-sliders text-warning me-2"></i>Configuração do Motor de IA</h5>
+                <button type="button" id="btn-testar-conexao" class="btn btn-warning btn-sm fw-bold">
+                    <i class="fa-solid fa-plug-circle-check me-1"></i> Testar conexão
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="resultado-teste" class="alert d-none" role="alert"></div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'ia-requisicoes' %}" class="btn btn-outline-secondary">
+                            <i class="fa-solid fa-list-check me-1"></i> Ver Auditoria
+                        </a>
+                        <button type="submit" class="btn btn-success px-4">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Salvar Configuração
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#btn-testar-conexao').on('click', function() {
+        const btn = $(this);
+        const box = $('#resultado-teste');
+        btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-1"></i> Testando...');
+        box.removeClass('d-none alert-success alert-danger').addClass('alert-info').text('Enviando requisição de teste para a IA...');
+
+        $.ajax({
+            url: "{% url 'ia-testar-conexao' %}",
+            type: "POST",
+            headers: { "X-CSRFToken": "{{ csrf_token }}" },
+            success: function(res) {
+                if (res.sucesso) {
+                    box.removeClass('alert-info alert-danger').addClass('alert-success')
+                       .html(`<strong><i class="fa-solid fa-circle-check me-1"></i>Conexão OK!</strong> (${res.tempo_ms}ms | ${res.tokens} tokens)<br>${res.resposta}`);
+                } else {
+                    box.removeClass('alert-info alert-success').addClass('alert-danger')
+                       .html(`<strong><i class="fa-solid fa-triangle-exclamation me-1"></i>Falha na conexão:</strong> ${res.erro}`);
+                }
+            },
+            error: function() {
+                box.removeClass('alert-info alert-success').addClass('alert-danger')
+                   .text('Erro de comunicação com o servidor Django.');
+            },
+            complete: function() {
+                btn.prop('disabled', false).html('<i class="fa-solid fa-plug-circle-check me-1"></i> Testar conexão');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block titulo %}IA por Usuário - Exotika Brazil{% endblock %}
+
+{% block conteudo %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3><i class="fa-solid fa-users-gear text-warning me-2"></i>Consumo e Cotas de IA por Usuário ({{ mes_atual }})</h3>
+    <a href="{% url 'ia-configuracao' %}" class="btn btn-dark btn-sm">
+        <i class="fa-solid fa-sliders me-1"></i> Configuração Geral
+    </a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Usuário</th>
+                    <th>Requisições no Mês</th>
+                    <th>Consumido / Limite</th>
+                    <th style="width: 25%;">Uso da Cota</th>
+                    <th>Ajustar Limite Mensal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in dados_usuarios %}
+                <tr>
+                    <td>
+                        <strong>{{ item.usuario.username }}</strong>
+                        {% if item.usuario.is_superuser %}<span class="badge bg-warning text-dark ms-1">Admin</span>{% endif %}
+                    </td>
+                    <td>{{ item.total_reqs }}</td>
+                    <td><strong>{{ item.cota.tokens_consumidos }}</strong> / {{ item.cota.limite_tokens }} tokens</td>
+                    <td>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar {% if item.cota.percentual_uso >= 90 %}bg-danger{% elif item.cota.percentual_uso >= 70 %}bg-warning{% else %}bg-success{% endif %}"
+                                 role="progressbar" style="width: {{ item.cota.percentual_uso }}%;">
+                                {{ item.cota.percentual_uso }}%
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <form method="post" class="d-flex gap-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="cota_id" value="{{ item.cota.id }}">
+                            <input type="number" name="limite_tokens" value="{{ item.cota.limite_tokens }}" class="form-control form-control-sm" style="width: 120px;" min="0" step="1000">
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Salvar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

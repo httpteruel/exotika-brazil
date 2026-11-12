@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Meu Consumo de IA - Exotika Brazil{% endblock %}
+
+{% block conteudo %}
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Cota Mensal ({{ cota.mes|stringformat:"02d" }}/{{ cota.ano }})</h6>
+                <h3 class="fw-bold">{{ cota.tokens_consumidos }} <small class="fs-6 text-muted">/ {{ cota.limite_tokens }} tokens</small></h3>
+                <div class="progress mt-2" style="height: 12px;">
+                    <div class="progress-bar bg-warning" style="width: {{ cota.percentual_uso }}%;"></div>
+                </div>
+                <small class="text-muted d-block mt-1">Restam <strong>{{ cota.tokens_restantes }}</strong> tokens neste mês.</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Total de Chamadas Realizadas</h6>
+                <h3 class="fw-bold text-primary">{{ total_chamadas }}</h3>
+                <small class="text-muted">Requisições registradas em sua conta.</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Total Histórico de Tokens</h6>
+                <h3 class="fw-bold text-success">{{ total_tokens_historico }}</h3>
+                <small class="text-muted">Soma acumulada de entrada e saída.</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-dark text-white">
+        <h6 class="mb-0"><i class="fa-solid fa-clock-rotate-left text-warning me-2"></i>Minhas Últimas 10 Requisições</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Origem</th>
+                    <th>Prompt</th>
+                    <th>Tokens</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in ultimas_reqs %}
+                <tr>
+                    <td><small>{{ req.criado_em|date:"d/m/Y H:i" }}</small></td>
+                    <td>{{ req.origem }}</td>
+                    <td><small>{{ req.prompt_enviado|truncatechars:70 }}</small></td>
+                    <td><strong>{{ req.total_tokens }}</strong></td>
+                    <td>
+                        {% if req.status == 'SUCESSO' %}<span class="badge bg-success">Sucesso</span>
+                        {% else %}<span class="badge bg-danger">{{ req.get_status_display }}</span>{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center py-3 text-muted">Você ainda não realizou chamadas de IA.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -55,6 +55,46 @@
                                         class="fa-solid fa-box me-2"></i>Produtos</a></li>
                         </ul>
                     </li>
+
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fa-solid fa-robot text-warning me-1"></i> Inteligência Artificial
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'ia-assistente' %}">
+                                    <i class="fa-solid fa-comments me-2 text-primary"></i>Assistente Virtual
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'ia-meu-consumo' %}">
+                                    <i class="fa-solid fa-gauge-high me-2 text-success"></i>Meu Consumo
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'ia-requisicoes' %}">
+                                    <i class="fa-solid fa-clipboard-list me-2 text-secondary"></i>Requisições (Auditoria)
+                                </a>
+                            </li>
+                            {% if user.is_superuser %}
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'ia-por-usuario' %}">
+                                    <i class="fa-solid fa-users-gear me-2 text-info"></i>IA por Usuário
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'ia-configuracao' %}">
+                                    <i class="fa-solid fa-sliders me-2 text-warning"></i>Configuração IA
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
                 </ul>
 
                 <ul class="navbar-nav">
@@ -118,7 +158,7 @@
 
     <footer class="bg-dark text-light py-3 mt-auto text-center border-top border-secondary">
         <div class="container">
-            <small>© 2026 <strong>Exotika Brazil</strong> - Sistema de Gestão de Animais Exóticos e Insumos.</small>
+            <small>© 2026 <strong>Exotika Brazil</strong> — Sistema de Gestão de Animais Exóticos e Insumos.</small>
         </div>
     </footer>
 
